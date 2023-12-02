@@ -164,6 +164,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 221313832}
+  - component: {fileID: 221313833}
   m_Layer: 0
   m_Name: Clock
   m_TagString: Untagged
@@ -202,6 +203,21 @@ Transform:
   - {fileID: 1591408913}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &221313833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221313831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dec263924d8044b459d72230417e112d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoursHolder: {fileID: 903958767}
+  minutesHolder: {fileID: 535957886}
+  secondsHolder: {fileID: 202435509}
 --- !u!1 &485476406
 GameObject:
   m_ObjectHideFlags: 0
@@ -1027,7 +1043,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1667,7 +1683,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8cf00871df18c034c8da7d962dd89868, type: 2}
+  - {fileID: 2100000, guid: 55e5ed8ba2cb9cc43b83fb3e6d3856dd, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
