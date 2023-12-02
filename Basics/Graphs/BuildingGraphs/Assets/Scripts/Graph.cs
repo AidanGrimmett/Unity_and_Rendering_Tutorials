@@ -29,7 +29,7 @@ public class Graph : MonoBehaviour
             //to fix we add 0.5
             //point.localPosition = Vector3.right * ((i + 0.5f) / 5 - 1);
             position.x = (i + 0.5f) / step - 1;
-            position.y = position.x * position.x;
+            position.y = position.x * position.x * position.x;
             point.localPosition = position;
             point.SetParent(transform, false);
 
