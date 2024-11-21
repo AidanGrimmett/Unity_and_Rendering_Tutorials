@@ -1,0 +1,85 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using static UnityEngine.Mathf;
+
+public static class FunctionLibrary3D
+{
+    public delegate Vector3 Function(float u, float v, float t, float speed);
+
+    public enum FunctionName { Wave, MultiWave, Ripple, Sphere, Torus, SpiralThing }
+
+    static Function[] functions = { Wave, MultiWave, Ripple, Sphere, Torus, SpiralThing};
+
+    public static Function GetFunction(FunctionName name)
+    {
+        return functions[(int)name];
+    }
+
+    public static Vector3 Wave(float u, float v, float t, float speed)
+    {
+        Vector3 p;
+        p.x = u;
+        //set y position, scaling pos.x by PI will show the full function, and scaling time by PI will make it repeat every 2 seconds
+        p.y = Sin(PI * (u - v + t * (2 / speed))); //t * (2 / speed) will make it take 'speed' seconds to repeat the function
+        p.z = v;
+
+        return p; 
+    }
+
+    public static Vector3 MultiWave(float u, float v, float t, float speed)
+    {
+        Vector3 p;
+        p.x = u;
+        p.y = Sin(PI * (u + t * (2 / speed))); 
+        p.y += 0.5f * Sin(2f * PI * (v + t * 2 * (2 / speed))); //add second function at double speed but half size
+        p.y += Sin(PI * (u - v + 0.25f * t * (2 / speed)));
+        p.y *= (1f / 2.5f); //prefer multiplication over division for non-constants. (2f / 3f) will be reduced to a single number by the compiler, but it doesn't know what y is and is more happy doing multiplication on something new than division :)
+        p.z = v;
+        return p;
+    }
+
+    public static Vector3 Ripple(float u, float v, float t, float speed)
+    {
+        float d = Sqrt(u * u + v * v);
+        Vector3 p;
+        p.x = u;
+        p.y = Sin(PI * (4f * d - t * (2 / speed)));
+        p.y /= (1f + 10f * d);
+        p.z = v;
+        return p;
+    }
+
+    public static Vector3 Sphere(float u, float v, float t, float speed)
+    {
+        Vector3 p;
+        float r = 0.9f + 0.1f * Sin(PI * (6f * u + 4f * v + t));
+        float s = r * Cos(0.5f * PI * v);
+        p.x = s *  Sin(PI * u);
+        p.y = r * Sin(PI * 0.5f * v);
+        p.z = s * Cos(PI * u);
+        return p;
+    }
+
+    public static Vector3 Torus(float u, float v, float t, float speed)
+    {
+        Vector3 p;
+        float r1 = (7f + Sin(PI * (6f * u + (t / 2)))) / 10f;
+        float r2 = (3 + Sin(PI * (8f * u + 4f * v + 2f * t))) / 20;
+        float s = r1 + r2 * Cos(PI * v);
+        p.x = s * Sin(PI * u);
+        p.y = r2 * Sin(PI * v);
+        p.z = s * Cos(PI * u);
+        return p;
+    }
+
+    public static Vector3 SpiralThing(float u, float v, float t, float speed)
+    {
+        Vector3 p;
+        p.x = (4 + Sin(2f * PI * v) * Sin(2f * PI * u)) * Sin(3f * PI * v * (t / 2));
+        p.y = Sin(2f * PI * v * t) * Cos(2f * PI * u) + 8f * v - 4f;
+        p.z = (4f + Sin(2f * PI * u) * Sin(2 * PI * u)) * Cos(3f * PI * v * (t / 2));
+        return p;
+    }
+}
+
