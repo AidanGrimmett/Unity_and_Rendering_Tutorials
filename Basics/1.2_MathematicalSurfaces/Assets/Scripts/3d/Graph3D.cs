@@ -16,6 +16,10 @@ public class Graph3D : MonoBehaviour
     [SerializeField]
     FunctionLibrary3D.FunctionName function;
 
+    [SerializeField, Range(0f, 10f)]
+    float functionDuration;
+    float duration;
+
     Transform[] points;
 
 
@@ -39,6 +43,17 @@ public class Graph3D : MonoBehaviour
     }
 
     private void Update()
+    {
+        duration += Time.unscaledDeltaTime;
+        if (duration >= functionDuration && functionDuration > 0)
+        {
+            duration -= functionDuration;
+            function = FunctionLibrary3D.GetNextFunctionName(function);
+        }
+        UpdateFunction();
+    }
+
+    private void UpdateFunction()
     {
         //invoke Time.time once outside of the loop ( ~EFFICIENCY~ )
         float t = Time.time;

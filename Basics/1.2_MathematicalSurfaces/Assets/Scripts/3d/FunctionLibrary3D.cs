@@ -16,6 +16,11 @@ public static class FunctionLibrary3D
         return functions[(int)name];
     }
 
+    public static FunctionName GetNextFunctionName(FunctionName name)
+    {
+        return (int)name < functions.Length - 1 ? name + 1 : 0;
+    }
+
     public static Vector3 Wave(float u, float v, float t, float speed)
     {
         Vector3 p;
@@ -53,7 +58,7 @@ public static class FunctionLibrary3D
     public static Vector3 Sphere(float u, float v, float t, float speed)
     {
         Vector3 p;
-        float r = 0.9f + 0.1f * Sin(PI * (6f * u + 4f * v + t));
+        float r = 0.9f + 0.1f * Sin(PI * (6f * u + 4f * v + t * (2f / speed)));
         float s = r * Cos(0.5f * PI * v);
         p.x = s *  Sin(PI * u);
         p.y = r * Sin(PI * 0.5f * v);
@@ -64,21 +69,21 @@ public static class FunctionLibrary3D
     public static Vector3 Torus(float u, float v, float t, float speed)
     {
         Vector3 p;
-        float r1 = (7f + Sin(PI * (6f * u + (t / 2)))) / 10f;
-        float r2 = (3 + Sin(PI * (8f * u + 4f * v + 2f * t))) / 20;
+        float r1 = (7f + Sin(PI * (6f * u + (t / 2 / speed)))) / 10f;
+        float r2 = (3 + Sin(PI * (8f * u + 4f * v + 2f * t / speed))) / 20;
         float s = r1 + r2 * Cos(PI * v);
         p.x = s * Sin(PI * u);
         p.y = r2 * Sin(PI * v);
         p.z = s * Cos(PI * u);
-        return p;
+        return p * 1.5f;
     }
 
     public static Vector3 SpiralThing(float u, float v, float t, float speed)
     {
         Vector3 p;
-        p.x = (4 + Sin(2f * PI * v) * Sin(2f * PI * u)) * Sin(3f * PI * v * (t / 2));
-        p.y = Sin(2f * PI * v * t) * Cos(2f * PI * u) + 8f * v - 4f;
-        p.z = (4f + Sin(2f * PI * u) * Sin(2 * PI * u)) * Cos(3f * PI * v * (t / 2));
+        p.x = ((4 + Sin(2f * PI * v) * Sin(2f * PI * u)) * Sin(3f * PI * v * (t / 2 * (1f / speed)))) * 1f / 4f;
+        p.y = (Sin(2f * PI * v * t) * Cos(2f * PI * u) + 8f * v - 4f) * 1f / 12f + 0.5f;
+        p.z = ((4f + Sin(2f * PI * u) * Sin(2 * PI * u)) * Cos(3f * PI * v * (t / 2 * (1f / speed)))) * 1f / 4f;
         return p;
     }
 }
