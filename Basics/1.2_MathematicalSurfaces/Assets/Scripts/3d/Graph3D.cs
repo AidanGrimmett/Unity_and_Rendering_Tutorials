@@ -16,9 +16,16 @@ public class Graph3D : MonoBehaviour
     [SerializeField]
     FunctionLibrary3D.FunctionName function;
 
+
     [SerializeField, Range(0f, 10f)]
-    float functionDuration;
+    float functionDuration = 1, transitionDuration = 1;
     float duration;
+    bool transitioning;
+    FunctionLibrary3D.FunctionName transitioningFunction;
+    public enum TransitionMode { Cycle, Random }
+    [SerializeField]
+    TransitionMode transitionMode;
+
 
     Transform[] points;
 
@@ -45,12 +52,37 @@ public class Graph3D : MonoBehaviour
     private void Update()
     {
         duration += Time.unscaledDeltaTime;
-        if (duration >= functionDuration && functionDuration > 0)
+        if (transitioning)
+        {
+            if (duration >= transitionDuration)
+            {
+                duration -= transitionDuration;
+                transitioning = false;
+            }
+        }
+        else if (duration >= functionDuration && functionDuration > 0)
         {
             duration -= functionDuration;
-            function = FunctionLibrary3D.GetNextFunctionName(function);
+            transitioning = true;
+            transitioningFunction = function;
+            GetNextFunction();
         }
-        UpdateFunction();
+        if (transitioning)
+        {
+            UpdateFunctionTransition();
+        }
+        else
+        {
+            UpdateFunction();
+        }
+    }
+
+    private void GetNextFunction()
+    {
+        //if transition mode is cycle, function will equal GetNextFunctionName(function), otherwise GetRandom...(function)
+        function = transitionMode == TransitionMode.Cycle ?
+        FunctionLibrary3D.GetNextFunctionName(function) :
+        FunctionLibrary3D.GetRandomFunctionNameOtherThan(function);
     }
 
     private void UpdateFunction()
@@ -79,6 +111,37 @@ public class Graph3D : MonoBehaviour
 
             //set position 
             point.localPosition = f(u, v, t, speed);
+        }
+    }
+
+    private void UpdateFunctionTransition()
+    {
+        //invoke Time.time once outside of the loop ( ~EFFICIENCY~ )
+        float t = Time.time;
+
+        //get desired function method from FunctionLibrary
+        FunctionLibrary3D.Function from = FunctionLibrary3D.GetFunction(transitioningFunction),
+            to = FunctionLibrary3D.GetFunction(function);
+        float progress = duration / transitionDuration;
+
+        float step = 2f / resolution;
+
+        float v = 0.5f * step - 1f;
+        for (int i = 0, x = 0, z = 0; i < points.Length; i++, x++)
+        {
+            if (x == resolution)
+            {
+                x = 0;
+                z += 1;
+                v = (z + 0.5f) * step - 1f;
+            }
+
+            Transform point = points[i];
+
+            float u = (x + 0.5f) * step - 1f;
+
+            //set position 
+            point.localPosition = FunctionLibrary3D.Morph(u, v, t, speed, from, to, progress);
         }
     }
 }

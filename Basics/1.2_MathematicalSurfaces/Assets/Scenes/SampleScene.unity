@@ -156,7 +156,9 @@ MonoBehaviour:
   resolution: 69
   speed: 3.98
   function: 0
-  functionDuration: 1.01
+  functionDuration: 1.99
+  transitionDuration: 3.01
+  transitionMode: 1
 --- !u!4 &320702773
 Transform:
   m_ObjectHideFlags: 0

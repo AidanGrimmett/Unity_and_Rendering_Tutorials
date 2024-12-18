@@ -21,6 +21,17 @@ public static class FunctionLibrary3D
         return (int)name < functions.Length - 1 ? name + 1 : 0;
     }
 
+    public static FunctionName GetRandomFunctionNameOtherThan(FunctionName disallowedName)
+    {
+        FunctionName choice = (FunctionName)Random.Range(1, functions.Length);
+        return choice == disallowedName ? 0 : choice;
+    }
+
+    public static Vector3 Morph(float u, float v, float t, float speed, Function from, Function To, float progress)
+    {
+        return Vector3.LerpUnclamped(from(u, v, t, speed), To(u, v, t, speed), Mathf.SmoothStep(0, 1, progress));
+    }
+
     public static Vector3 Wave(float u, float v, float t, float speed)
     {
         Vector3 p;
