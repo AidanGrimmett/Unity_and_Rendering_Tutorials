@@ -52,6 +52,7 @@ public class Graph3D : MonoBehaviour
     private void Update()
     {
         duration += Time.unscaledDeltaTime;
+        //if transitioning, check progress and if done disable
         if (transitioning)
         {
             if (duration >= transitionDuration)
@@ -62,11 +63,13 @@ public class Graph3D : MonoBehaviour
         }
         else if (duration >= functionDuration && functionDuration > 0)
         {
+            //starting a transition
             duration -= functionDuration;
             transitioning = true;
             transitioningFunction = function;
             GetNextFunction();
         }
+        //if transitioning calculate transition point positions
         if (transitioning)
         {
             UpdateFunctionTransition();
@@ -119,7 +122,7 @@ public class Graph3D : MonoBehaviour
         //invoke Time.time once outside of the loop ( ~EFFICIENCY~ )
         float t = Time.time;
 
-        //get desired function method from FunctionLibrary
+        //get both current and next function so that point position can be interpolated between the two.
         FunctionLibrary3D.Function from = FunctionLibrary3D.GetFunction(transitioningFunction),
             to = FunctionLibrary3D.GetFunction(function);
         float progress = duration / transitionDuration;

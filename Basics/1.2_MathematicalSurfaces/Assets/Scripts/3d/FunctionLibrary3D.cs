@@ -23,12 +23,18 @@ public static class FunctionLibrary3D
 
     public static FunctionName GetRandomFunctionNameOtherThan(FunctionName disallowedName)
     {
+        //This is cool, the choice is a random selection between 1 and the function length (so 0 is never chosen)
         FunctionName choice = (FunctionName)Random.Range(1, functions.Length);
+        //then here, we check if the choice is the disallowed function name (current function), and if it is we substitute the selection to 0
         return choice == disallowedName ? 0 : choice;
+        //this introduces no selection bias and is very tasty
     }
 
     public static Vector3 Morph(float u, float v, float t, float speed, Function from, Function To, float progress)
     {
+        //LerpUnclamped (because the smoothstep is already clamped, no need for extra clamping)
+        //between two functions to interpolate the position of each point between the from func and the two func based on the progress of the transition
+        //calculations are being done for BOTH functions, PLUS a little interpolation overhead during transitions, making them AT LEAST twice as expensive.
         return Vector3.LerpUnclamped(from(u, v, t, speed), To(u, v, t, speed), Mathf.SmoothStep(0, 1, progress));
     }
 
