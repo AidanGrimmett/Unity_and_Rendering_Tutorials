@@ -123,6 +123,56 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &57583478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 57583480}
+  - component: {fileID: 57583479}
+  m_Layer: 0
+  m_Name: GPUGraph
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &57583479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57583478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1b2a41b8b1688d44a55d186b1a8d4c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  resolution: 200
+  speed: 4.4
+  function: 5
+  functionDuration: 1.99
+  transitionDuration: 3.5
+  transitionMode: 0
+--- !u!4 &57583480
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57583478}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &320702771
 GameObject:
   m_ObjectHideFlags: 0
@@ -139,7 +189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &320702772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,7 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pointPrefab: {fileID: 3288422535391146919, guid: b6e1a5d1780b0684791ad7db2e126ff8, type: 3}
-  resolution: 69
+  resolution: 200
   speed: 3.98
   function: 0
   functionDuration: 1.99
@@ -889,3 +939,4 @@ SceneRoots:
   - {fileID: 320702773}
   - {fileID: 555588039}
   - {fileID: 958414248}
+  - {fileID: 57583480}

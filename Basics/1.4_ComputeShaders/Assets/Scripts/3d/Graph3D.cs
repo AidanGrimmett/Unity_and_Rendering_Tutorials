@@ -7,7 +7,7 @@ public class Graph3D : MonoBehaviour
     [SerializeField]
     Transform pointPrefab;
 
-    [SerializeField, Range(10, 100)]
+    [SerializeField, Range(10, 200)]
     int resolution = 10;
 
     [SerializeField, Range(0.1f, 10f)]
