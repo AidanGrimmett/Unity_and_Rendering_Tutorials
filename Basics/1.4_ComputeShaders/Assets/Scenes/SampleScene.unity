@@ -152,12 +152,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1b2a41b8b1688d44a55d186b1a8d4c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 200
-  speed: 4.4
-  function: 5
-  functionDuration: 1.99
-  transitionDuration: 3.5
+  resolution: 690
+  speed: 2
+  function: 0
+  functionDuration: 10
+  transitionDuration: 0
   transitionMode: 0
+  computeShader: {fileID: 7200000, guid: bb644191541f28741bf7dbc1ea770916, type: 3}
+  mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  material: {fileID: 2100000, guid: 41ddf22532ccf194eb30ee27d8371fef, type: 2}
 --- !u!4 &57583480
 Transform:
   m_ObjectHideFlags: 0
@@ -840,7 +843,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: -0.000061035156}
+  m_AnchoredPosition: {x: 0, y: -0.000061035156}
   m_SizeDelta: {x: 60, y: 70}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1358542008

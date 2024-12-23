@@ -6,7 +6,7 @@ RWStructuredBuffer<float3> _Positions;
 
 uint _Resolution;
 
-float _Step;
+float _Step, _Time, _Speed;
 
 //this takes a thread identifier, and returns the UV coordinates as a float 2.
 //applies the logic from original graph, adding 0.5, multiply by step size, subtract 1
@@ -15,6 +15,10 @@ float2 GetUV (uint3 id)
     return (id.xy + 0.5) * _Step - 1.0;
 }
 
+//function to set the an index in the buffer to be a position
+//index is given by adding its x pos with y pos multiplied by the resolution, this stores 2D data sequentially in a 1D array.
+//The first row is stored in indices [0, resolution - 1].
+//The second row starts immediately after the first, at index resolution, and so on.
 void SetPosition (uint3 id, float3 position)
 {
     if (id.x < _Resolution && id.y < _Resolution)
@@ -23,10 +27,24 @@ void SetPosition (uint3 id, float3 position)
     }
 }
 
+#define PI 3.14159265358979323846
+
+float3 Wave(float u, float v, float t, float speed)
+{
+    float3 p;
+    p.x = u;
+    //set y position, scaling pos.x by PI will show the full function, and scaling time by PI will make it repeat every 2 seconds
+    p.y = sin(PI * (u - v + t * (2 / speed))); //t * (2 / speed) will make it take 'speed' seconds to repeat the function
+    p.z = v;
+
+    return p; 
+}
+
 // regarding numthreads: https://discussions.unity.com/t/need-help-understanding-compute-shaders/902852
 [numthreads(8, 8, 1)]
-void FunctionKernel(uint3 id: SV_DISPATCHTHREADID)
+void FunctionKernel(uint3 id: SV_DISPATCHTHREADID) //id is which thread in the group is executing this code block (out of the (8, 8, 1))
 {
- //CONTINUE FROM 1.8 WAVE FUNCTION 
+    float2 uv = GetUV(id);
+    SetPosition(id, Wave(uv.x, uv.y, _Time, _Speed));
 }
 
