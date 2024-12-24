@@ -1,12 +1,52 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel FunctionKernel
+#pragma kernel WaveKernel
+#pragma kernel WaveToMultiWaveKernel
+#pragma kernel WaveToRippleKernel
+#pragma kernel WaveToSphereKernel
+#pragma kernel WaveToTorusKernel
+#pragma kernel WaveToSpiralThingKernel
+
+#pragma kernel MultiWaveToWaveKernel
+#pragma kernel MultiWaveKernel
+#pragma kernel MultiWaveToRippleKernel
+#pragma kernel MultiWaveToSphereKernel
+#pragma kernel MultiWaveToTorusKernel
+#pragma kernel MultiWaveToSpiralThingKernel
+
+#pragma kernel RippleToWaveKernel
+#pragma kernel RippleToMultiWaveKernel
+#pragma kernel RippleKernel
+#pragma kernel RippleToSphereKernel
+#pragma kernel RippleToTorusKernel
+#pragma kernel RippleToSpiralThingKernel
+
+#pragma kernel SphereToWaveKernel
+#pragma kernel SphereToMultiWaveKernel
+#pragma kernel SphereToRippleKernel
+#pragma kernel SphereKernel
+#pragma kernel SphereToTorusKernel
+#pragma kernel SphereToSpiralThingKernel
+
+#pragma kernel TorusToWaveKernel
+#pragma kernel TorusToMultiWaveKernel
+#pragma kernel TorusToRippleKernel
+#pragma kernel TorusToSphereKernel
+#pragma kernel TorusKernel
+#pragma kernel TorusToSpiralThingKernel
+
+#pragma kernel SpiralThingToWaveKernel
+#pragma kernel SpiralThingToMultiWaveKernel
+#pragma kernel SpiralThingToRippleKernel
+#pragma kernel SpiralThingToSphereKernel
+#pragma kernel SpiralThingToTorusKernel
+#pragma kernel SpiralThingKernel
 
 //Compute buffers are known as structured buffers in HLSL, RW signifies read-write
 RWStructuredBuffer<float3> _Positions;
 
 uint _Resolution;
 
-float _Step, _Time, _Speed;
+float _Step, _Time, _Speed, _TransitionProgress;
 
 //this takes a thread identifier, and returns the UV coordinates as a float 2.
 //applies the logic from original graph, adding 0.5, multiply by step size, subtract 1
@@ -96,10 +136,64 @@ float3 SpiralThing(float u, float v, float t, float speed)
 }
 
 // regarding numthreads: https://discussions.unity.com/t/need-help-understanding-compute-shaders/902852
-[numthreads(8, 8, 1)]
-void FunctionKernel(uint3 id: SV_DISPATCHTHREADID) //id is which thread in the group is executing this code block (out of the (8, 8, 1))
-{
-    float2 uv = GetUV(id);
-    SetPosition(id, Torus(uv.x, uv.y, _Time, _Speed));
-}
+#define KERNEL_FUNCTION(function) \ //backslash allows the define macro to carry on over multiple lines
+    [numthreads(8, 8, 1)] \ 
+    void function##Kernel(uint3 id: SV_DISPATCHTHREADID) \//id is which thread in the group is executing this code block (out of the (8, 8, 1))
+    { \
+        float2 uv = GetUV(id); \
+        SetPosition(id, function(uv.x, uv.y, _Time, _Speed)); \
+    }
 
+KERNEL_FUNCTION(Wave)
+KERNEL_FUNCTION(MultiWave)
+KERNEL_FUNCTION(Ripple)
+KERNEL_FUNCTION(Sphere)
+KERNEL_FUNCTION(Torus)
+KERNEL_FUNCTION(SpiralThing)
+
+#define KERNEL_MORPH_FUNCTION(functionA, functionB) \ //backslash allows the define macro to carry on over multiple lines
+    [numthreads(8, 8, 1)] \ 
+    void functionA##To##functionB##Kernel(uint3 id: SV_DISPATCHTHREADID) \//id is which thread in the group is executing this code block (out of the (8, 8, 1))
+    { \
+        float2 uv = GetUV(id); \
+        float3 position = lerp( \
+            functionA(uv.x, uv.y, _Time, _Speed), functionB(uv.x, uv.y, _Time, _Speed), _TransitionProgress \
+        ); \
+        SetPosition(id, position); \
+    }
+
+KERNEL_MORPH_FUNCTION(Wave, MultiWave);
+KERNEL_MORPH_FUNCTION(Wave, Ripple);
+KERNEL_MORPH_FUNCTION(Wave, Sphere);
+KERNEL_MORPH_FUNCTION(Wave, Torus);
+KERNEL_MORPH_FUNCTION(Wave, SpiralThing);
+
+KERNEL_MORPH_FUNCTION(MultiWave, Wave);
+KERNEL_MORPH_FUNCTION(MultiWave, Ripple);
+KERNEL_MORPH_FUNCTION(MultiWave, Sphere);
+KERNEL_MORPH_FUNCTION(MultiWave, Torus);
+KERNEL_MORPH_FUNCTION(MultiWave, SpiralThing);
+
+KERNEL_MORPH_FUNCTION(Ripple, Wave);
+KERNEL_MORPH_FUNCTION(Ripple, MultiWave);
+KERNEL_MORPH_FUNCTION(Ripple, Sphere);
+KERNEL_MORPH_FUNCTION(Ripple, Torus);
+KERNEL_MORPH_FUNCTION(Ripple, SpiralThing);
+
+KERNEL_MORPH_FUNCTION(Sphere, Wave);
+KERNEL_MORPH_FUNCTION(Sphere, MultiWave);
+KERNEL_MORPH_FUNCTION(Sphere, Ripple);
+KERNEL_MORPH_FUNCTION(Sphere, Torus);
+KERNEL_MORPH_FUNCTION(Sphere, SpiralThing);
+
+KERNEL_MORPH_FUNCTION(Torus, Wave);
+KERNEL_MORPH_FUNCTION(Torus, MultiWave);
+KERNEL_MORPH_FUNCTION(Torus, Ripple);
+KERNEL_MORPH_FUNCTION(Torus, Sphere);
+KERNEL_MORPH_FUNCTION(Torus, SpiralThing);
+
+KERNEL_MORPH_FUNCTION(SpiralThing, Wave);
+KERNEL_MORPH_FUNCTION(SpiralThing, MultiWave);
+KERNEL_MORPH_FUNCTION(SpiralThing, Ripple);
+KERNEL_MORPH_FUNCTION(SpiralThing, Sphere);
+KERNEL_MORPH_FUNCTION(SpiralThing, Torus);

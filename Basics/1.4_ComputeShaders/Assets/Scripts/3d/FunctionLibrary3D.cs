@@ -11,15 +11,18 @@ public static class FunctionLibrary3D
 
     static Function[] functions = { Wave, MultiWave, Ripple, Sphere, Torus, SpiralThing};
 
-    public static Function GetFunction(FunctionName name)
+    public static int GetFunctionCount()
     {
-        return functions[(int)name];
+        return functions.Length;
     }
 
-    public static FunctionName GetNextFunctionName(FunctionName name)
-    {
-        return (int)name < functions.Length - 1 ? name + 1 : 0;
-    }
+    public static int FunctionCount => functions.Length; 
+
+    //get function by name
+    public static Function GetFunction(FunctionName name) => functions[(int)name];
+
+    //get next function in the sequence
+    public static FunctionName GetNextFunctionName(FunctionName name) => (int)name < functions.Length - 1 ? name + 1 : 0;
 
     public static FunctionName GetRandomFunctionNameOtherThan(FunctionName disallowedName)
     {

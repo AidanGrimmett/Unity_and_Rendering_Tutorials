@@ -41,7 +41,8 @@ public class GPUGraph : MonoBehaviour
         resolutionId = Shader.PropertyToID("_Resolution"),
         stepId = Shader.PropertyToID("_Step"),
         timeId = Shader.PropertyToID("_Time"),
-        speedId = Shader.PropertyToID("_Speed");
+        speedId = Shader.PropertyToID("_Speed"),
+        transitionProgressId = Shader.PropertyToID("_TransitionProgress");
 
     private void OnEnable() //OnEnable is invoked every time the component is enabled, unlike awake() or start()
     {
@@ -65,11 +66,17 @@ public class GPUGraph : MonoBehaviour
         computeShader.SetFloat(stepId, step);
         computeShader.SetFloat(timeId, Time.time);
         computeShader.SetFloat(speedId, speed);
+        if (transitioning)
+        {
+            computeShader.SetFloat(transitionProgressId, Mathf.SmoothStep(0f, 1f, duration / transitionDuration));
+        }
 
-        computeShader.SetBuffer(0, positionsId, positionsBuffer);
+        var kernelIndex = (int)function + (int)(transitioning ? transitioningFunction : function) * FunctionLibrary3D.FunctionCount;
+        computeShader.SetBuffer(kernelIndex, positionsId, positionsBuffer);
+
 
         int groups = Mathf.CeilToInt(resolution / 8f);
-        computeShader.Dispatch(0, groups, groups, 1);
+        computeShader.Dispatch(kernelIndex, groups, groups, 1);
 
         material.SetBuffer(positionsId, positionsBuffer);
         material.SetFloat(stepId, step);
@@ -90,7 +97,7 @@ public class GPUGraph : MonoBehaviour
                 transitioning = false;
             }
         }
-        else if (duration >= functionDuration && functionDuration > 0)
+        else if (duration >= functionDuration && functionDuration > 0f)
         {
             //starting a transition
             duration -= functionDuration;
