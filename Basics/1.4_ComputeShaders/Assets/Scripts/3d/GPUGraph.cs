@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class GPUGraph : MonoBehaviour
 {
-    [SerializeField, Range(10, 1000)]
+    const int maxResolution = 1000;
+
+    [SerializeField, Range(10, maxResolution)]
     int resolution = 10;
 
     [SerializeField, Range(0.1f, 10f)]
@@ -47,7 +49,7 @@ public class GPUGraph : MonoBehaviour
         //  However, compute buffers hold abitrary untyped data, so the second argument (the stride) specifies
         //  the exact size of each element in bytes. Each position needs 3 float numbers, one float is 4 bytes so 
         //  we need 3 * 4 bytes as our stride.
-        positionsBuffer = new ComputeBuffer(resolution * resolution, 3 * 4);
+        positionsBuffer = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
     }
 
     private void OnDisable()
@@ -73,7 +75,7 @@ public class GPUGraph : MonoBehaviour
         material.SetFloat(stepId, step);
 
         var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, positionsBuffer.count);
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * resolution);
     }
 
     private void Update()

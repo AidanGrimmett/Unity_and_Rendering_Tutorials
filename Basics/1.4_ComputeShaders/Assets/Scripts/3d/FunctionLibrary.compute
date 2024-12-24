@@ -40,11 +40,66 @@ float3 Wave(float u, float v, float t, float speed)
     return p; 
 }
 
+float3 MultiWave(float u, float v, float t, float speed)
+{
+    float3 p;
+    p.x = u;
+    p.y = sin(PI * (u + t * (2 / speed))); 
+    p.y += 0.5 * sin(2.0 * PI * (v + t * 2 * (2 / speed))); //add second function at double speed but half size
+    p.y += sin(PI * (u - v + 0.25 * t * (2 / speed)));
+    p.y *= (1.0 / 2.5); //prefer multiplication over division for non-constants. (2f / 3f) will be reduced to a single number by the compiler, but it doesn't know what y is and is more happy doing multiplication on something new than division :)
+    p.z = v;
+    return p;
+}
+
+float3 Ripple(float u, float v, float t, float speed)
+{
+    float d = sqrt(u * u + v * v);
+    float3 p;
+    p.x = u;
+    p.y = sin(PI * (4.0 * d - t * (2 / speed)));
+    p.y /= (1.0 + 10.0 * d);
+    p.z = v;
+    return p;
+}
+
+float3 Sphere(float u, float v, float t, float speed)
+{
+    float3 p;
+    float r = 0.9 + 0.1 * sin(PI * (6.0 * u + 4.0 * v + t * (2.0 / speed)));
+    float s = r * cos(0.5 * PI * v);
+    p.x = s *  sin(PI * u);
+    p.y = r * sin(PI * 0.5 * v);
+    p.z = s * cos(PI * u);
+    return p;
+}
+
+float3 Torus(float u, float v, float t, float speed)
+{
+    float3 p;
+    float r1 = (7.0 + sin(PI * (6.0 * u + (t / 2 / speed)))) / 10.0;
+    float r2 = (3 + sin(PI * (8.0 * u + 4.0 * v + 2.0 * t / speed))) / 20.0;
+    float s = r1 + r2 * cos(PI * v);
+    p.x = s * sin(PI * u);
+    p.y = r2 * sin(PI * v);
+    p.z = s * cos(PI * u);
+    return p * 1.5;
+}
+
+float3 SpiralThing(float u, float v, float t, float speed)
+{
+    float3 p;
+    p.x = ((4 + sin(2.0 * PI * v) * sin(2.0 * PI * u)) * sin(3.0 * PI * v * (t / 2 * (1.0 / speed)))) * 1.0 / 4.0;
+    p.y = (sin(2.0 * PI * v * t) * cos(2.0 * PI * u) + 8.0 * v - 4.0) * 1.0 / 12.0 + 0.5;
+    p.z = ((4.0 + sin(2.0 * PI * u) * sin(2 * PI * u)) * cos(3.0 * PI * v * (t / 2 * (1.0 / speed)))) * 1.0 / 4.0;
+    return p;
+}
+
 // regarding numthreads: https://discussions.unity.com/t/need-help-understanding-compute-shaders/902852
 [numthreads(8, 8, 1)]
 void FunctionKernel(uint3 id: SV_DISPATCHTHREADID) //id is which thread in the group is executing this code block (out of the (8, 8, 1))
 {
     float2 uv = GetUV(id);
-    SetPosition(id, Wave(uv.x, uv.y, _Time, _Speed));
+    SetPosition(id, Torus(uv.x, uv.y, _Time, _Speed));
 }
 
