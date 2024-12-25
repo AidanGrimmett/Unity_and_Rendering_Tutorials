@@ -136,8 +136,8 @@ float3 SpiralThing(float u, float v, float t, float speed)
 }
 
 // regarding numthreads: https://discussions.unity.com/t/need-help-understanding-compute-shaders/902852
-#define KERNEL_FUNCTION(function) \ //backslash allows the define macro to carry on over multiple lines
-    [numthreads(8, 8, 1)] \ 
+#define KERNEL_FUNCTION(function) \//backslash allows the define macro to carry on over multiple lines
+    [numthreads(8, 8, 1)] \
     void function##Kernel(uint3 id: SV_DISPATCHTHREADID) \//id is which thread in the group is executing this code block (out of the (8, 8, 1))
     { \
         float2 uv = GetUV(id); \
@@ -151,9 +151,9 @@ KERNEL_FUNCTION(Sphere)
 KERNEL_FUNCTION(Torus)
 KERNEL_FUNCTION(SpiralThing)
 
-#define KERNEL_MORPH_FUNCTION(functionA, functionB) \ //backslash allows the define macro to carry on over multiple lines
-    [numthreads(8, 8, 1)] \ 
-    void functionA##To##functionB##Kernel(uint3 id: SV_DISPATCHTHREADID) \//id is which thread in the group is executing this code block (out of the (8, 8, 1))
+#define KERNEL_MORPH_FUNCTION(functionA, functionB) \//backslash allows the define macro to carry on over multiple lines
+    [numthreads(8, 8, 1)] \
+    void functionA##To##functionB##Kernel(uint3 id: SV_DISPATCHTHREADID) \
     { \
         float2 uv = GetUV(id); \
         float3 position = lerp( \

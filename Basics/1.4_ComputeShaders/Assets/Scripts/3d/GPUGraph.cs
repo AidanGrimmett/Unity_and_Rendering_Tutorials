@@ -7,7 +7,7 @@ public class GPUGraph : MonoBehaviour
     const int maxResolution = 1000;
 
     [SerializeField, Range(10, maxResolution)]
-    int resolution = 10;
+    int resolution = 100;
 
     [SerializeField, Range(0.1f, 10f)]
     float speed = 2f;
@@ -15,9 +15,12 @@ public class GPUGraph : MonoBehaviour
     [SerializeField]
     FunctionLibrary3D.FunctionName function;
 
+    public bool enableTransition;
+
 
     [SerializeField, Range(0f, 10f)]
-    float functionDuration = 1, transitionDuration = 1;
+    float functionDuration = 2f, transitionDuration = 2f;
+
     float duration;
     bool transitioning;
     FunctionLibrary3D.FunctionName transitioningFunction;
@@ -36,6 +39,8 @@ public class GPUGraph : MonoBehaviour
     [SerializeField]
     Material material;
 
+    private SettingsController settings;
+
     static readonly int 
         positionsId = Shader.PropertyToID("_Positions"),
         resolutionId = Shader.PropertyToID("_Resolution"),
@@ -51,6 +56,7 @@ public class GPUGraph : MonoBehaviour
         //  the exact size of each element in bytes. Each position needs 3 float numbers, one float is 4 bytes so 
         //  we need 3 * 4 bytes as our stride.
         positionsBuffer = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
+        settings = FindObjectOfType<SettingsController>();
     }
 
     private void OnDisable()
@@ -87,7 +93,8 @@ public class GPUGraph : MonoBehaviour
 
     private void Update()
     {
-        duration += Time.unscaledDeltaTime;
+        float time = Time.unscaledDeltaTime;
+        duration += time;
         //if transitioning, check progress and if done disable
         if (transitioning)
         {
@@ -97,7 +104,7 @@ public class GPUGraph : MonoBehaviour
                 transitioning = false;
             }
         }
-        else if (duration >= functionDuration && functionDuration > 0f)
+        else if (duration >= functionDuration && enableTransition)
         {
             //starting a transition
             duration -= functionDuration;
@@ -105,6 +112,10 @@ public class GPUGraph : MonoBehaviour
             transitioningFunction = function;
             GetNextFunction();
         }
+        //else if (!enableTransition) //undo duration progress if transitions are disabled
+        //{
+        //    duration -= time;
+        //}
         UpdateFunctionOnGPU();
     }
 
@@ -114,5 +125,38 @@ public class GPUGraph : MonoBehaviour
         function = transitionMode == TransitionMode.Cycle ?
         FunctionLibrary3D.GetNextFunctionName(function) :
         FunctionLibrary3D.GetRandomFunctionNameOtherThan(function);
+
+        settings.UpdateFunctionDisplay((int)function);
+    }
+
+    public void SetResolution(int res)
+    {
+        resolution = Mathf.Clamp(res, 0, maxResolution);
+    }
+
+    public void SetSpeed(float spd)
+    {
+        speed = spd;
+    }
+
+    public void SetDuration(float dur)
+    {
+        functionDuration = dur;
+    }
+
+    public void SetTransitionDuration(float dur)
+    {
+        transitionDuration = dur;
+    }
+
+    public void SetFunction(FunctionLibrary3D.FunctionName funcName)
+    {
+        //if (enableTransition)
+        //{
+        //    duration -= functionDuration;
+        //    transitioning = true;
+        //    transitioningFunction = function;
+        //}
+        function = funcName;
     }
 }
