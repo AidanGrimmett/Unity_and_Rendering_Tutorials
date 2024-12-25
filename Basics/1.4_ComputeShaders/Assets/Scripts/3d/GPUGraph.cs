@@ -93,8 +93,8 @@ public class GPUGraph : MonoBehaviour
 
     private void Update()
     {
-        float time = Time.unscaledDeltaTime;
-        duration += time;
+        duration += Time.unscaledDeltaTime;
+
         //if transitioning, check progress and if done disable
         if (transitioning)
         {
@@ -112,10 +112,7 @@ public class GPUGraph : MonoBehaviour
             transitioningFunction = function;
             GetNextFunction();
         }
-        //else if (!enableTransition) //undo duration progress if transitions are disabled
-        //{
-        //    duration -= time;
-        //}
+
         UpdateFunctionOnGPU();
     }
 
@@ -126,7 +123,7 @@ public class GPUGraph : MonoBehaviour
         FunctionLibrary3D.GetNextFunctionName(function) :
         FunctionLibrary3D.GetRandomFunctionNameOtherThan(function);
 
-        settings.UpdateFunctionDisplay((int)function);
+        settings.UpdateFunctionDisplay((int)function); //update the dropdown on settings panel
     }
 
     public void SetResolution(int res)
@@ -153,6 +150,7 @@ public class GPUGraph : MonoBehaviour
     {
         //if (enableTransition)
         //{
+        //    Debug.Log("Transition!");
         //    duration -= functionDuration;
         //    transitioning = true;
         //    transitioningFunction = function;

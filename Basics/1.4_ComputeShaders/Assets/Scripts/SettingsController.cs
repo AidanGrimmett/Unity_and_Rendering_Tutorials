@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using UnityEngine.EventSystems;
 
 public class SettingsController : MonoBehaviour
 {
@@ -25,7 +26,6 @@ public class SettingsController : MonoBehaviour
     TMP_Dropdown functionsDropdown;
 
     private bool showSettings;
-
 
     private void OnEnable()
     {
@@ -109,7 +109,9 @@ public class SettingsController : MonoBehaviour
             {
                 SetSettingsPanelVisibility(true);
             }
-            else if (Input.GetKeyDown(KeyCode.Escape))
+            else if (Input.GetKeyDown(KeyCode.Escape) ||
+                Input.GetMouseButtonDown(0) && 
+                (Input.mousePosition.x > 260f || Screen.height - Input.mousePosition.y > 350f))
             {
                 SetSettingsPanelVisibility(false);
             }
