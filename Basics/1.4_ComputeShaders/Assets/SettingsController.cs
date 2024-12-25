@@ -7,8 +7,6 @@ using System;
 
 public class SettingsController : MonoBehaviour
 {
-    public delegate void UpdateSetting(string text, float value);
-
     [SerializeField]
     GameObject SettingsPanel, FPSPanel;
     [SerializeField]
