@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class Fractal : MonoBehaviour
 {
+    static readonly int matricesId = Shader.PropertyToID("_Matrices");
+
+    static MaterialPropertyBlock propertyBlock; //allows you to change material properties between different objects using the same material
 
     struct FractalPart
     {
@@ -11,7 +14,7 @@ public class Fractal : MonoBehaviour
                          //floating point errors plague us otherwise.
     }
 
-    [SerializeField, Range(1, 8)]
+    [SerializeField, Range(1, 9)]
     int depth = 4;
 
     [SerializeField]
@@ -74,6 +77,8 @@ public class Fractal : MonoBehaviour
                 }
             }
         }
+
+        propertyBlock ??= new MaterialPropertyBlock(); // shorthand for: if propertyBlock is null, propertyBlock = new...
     }
 
     private void OnDisable()
@@ -128,9 +133,14 @@ public class Fractal : MonoBehaviour
             }
         }
 
+        var bounds = new Bounds(Vector3.zero, 3f * Vector3.one); //This is used by unity's culling system to decide whether the fractal needs to be drawn
+                                                                 //fractal will approach a limit less than 3 with infinite size, so this is a safe bounds
         for (int i = 0; i < matricesBuffers.Length; i++)
         {
-            matricesBuffers[i].SetData(matrices[i]);
+            ComputeBuffer buffer = matricesBuffers[i]; //this level buffer reference (holding instance transformation matrices)
+            buffer.SetData(matrices[i]); //updates compute buffer with new data for rendering and sends data to the GPU
+            propertyBlock.SetBuffer(matricesId, buffer); //populates the _Matrices property in the shader
+            Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, buffer.count, propertyBlock); //draw mesh instances procedurally, with correct property block
         }
     }
 }
