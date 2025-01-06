@@ -2,11 +2,9 @@ using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
-using Unity.Mathematics;
-using static Unity.Mathematics.math;
-using quaternion = Unity.Mathematics.quaternion;
 
-public class Fractal : MonoBehaviour
+
+public class FractalUnBurst : MonoBehaviour
 {
     //Defining a job requires a struct type which implements a job interface
     //the IJobFor interface requires an Execute(int) function with no return
@@ -23,20 +21,19 @@ public class Fractal : MonoBehaviour
         public NativeArray<FractalPart> parts;
         
         [WriteOnly]
-        public NativeArray<float3x4> matrices;
+        public NativeArray<Matrix4x4> matrices;
 
         public void Execute(int i)
         {
             FractalPart parent = parents[i / 5];
             FractalPart part = parts[i];
             part.spinAngle += spinAngleDelta;
-            part.worldRotation = mul(parent.worldRotation, mul(part.rotation, quaternion.RotateY(part.spinAngle))); //quaternion multiplication performs the second rotation, followed by the first rotation so order matters
+            part.worldRotation = parent.worldRotation * part.rotation * Quaternion.Euler(0, part.spinAngle, 0); //Quaternion multiplication performs the second rotation, followed by the first rotation so order matters
             part.worldPosition = parent.worldPosition +
-                mul(parent.worldRotation, 1.5f * scale * part.direction); //set position using scale and direction, applying parents rotation too.
+                parent.worldRotation * (1.5f * scale * part.direction); //set position using scale and direction, applying parents rotation too.
             parts[i] = part;
 
-            float3x3 r = float3x3(part.worldRotation) * scale; //to save data transfer to GPU we manually assemble a 3x4 matrix
-            matrices[i] = float3x4(r.c0, r.c1, r.c2, part.worldPosition); //starting with the 3x3 rotation then adding the world position
+            matrices[i] = Matrix4x4.TRS(part.worldPosition, part.worldRotation, scale * Vector3.one);
         }
     }
 
@@ -46,13 +43,13 @@ public class Fractal : MonoBehaviour
 
     struct FractalPart
     {
-        public float3 direction, worldPosition;
-        public quaternion rotation, worldRotation;
-        public float spinAngle; //used to maintain fresh quaternions for transformation matrices,
+        public Vector3 direction, worldPosition;
+        public Quaternion rotation, worldRotation;
+        public float spinAngle; //used to maintain fresh Quaternions for transformation matrices,
                          //floating point errors plague us otherwise.
     }
 
-    [SerializeField, Range(1, 10)]
+    [SerializeField, Range(1, 9)]
     int depth = 4;
 
     [SerializeField]
@@ -63,16 +60,16 @@ public class Fractal : MonoBehaviour
 
     NativeArray<FractalPart>[] parts;
 
-    NativeArray<float3x4>[] matrices; //usually, the transform component contains the necessary transformation matrices
+    NativeArray<Matrix4x4>[] matrices; //usually, the transform component contains the necessary transformation matrices
                             //as we are now using procedural drawing instead of GOs, we need to store these manually.
 
-    static float3[] directions = { up(), right(), left(), forward(), back() };
+    static Vector3[] directions = { Vector3.up, Vector3.right, Vector3.left, Vector3.forward, Vector3.back };
 
-    static quaternion[] rotations = 
+    static Quaternion[] rotations = 
     { 
-        quaternion.identity, 
-        quaternion.RotateZ(-0.5f * PI), quaternion.RotateZ(0.5f * PI),
-        quaternion.RotateX(0.5f * PI), quaternion.RotateX(-0.5f * PI) 
+        Quaternion.identity, 
+        Quaternion.Euler(0, 0, -90f), Quaternion.Euler(0, 0, 90f),
+        Quaternion.Euler(90f, 0, 0), Quaternion.Euler(-90f, 0, 0) 
     };
 
     ComputeBuffer[] matricesBuffers;
@@ -88,14 +85,14 @@ public class Fractal : MonoBehaviour
         //set up the parts array
         //parts is an array of FractalPart[] arrays, with `depth` elements (ie, (int)depth FractalPart[] arrays)
         parts = new NativeArray<FractalPart>[depth];
-        matrices = new NativeArray<float3x4>[depth];
+        matrices = new NativeArray<Matrix4x4>[depth];
         matricesBuffers = new ComputeBuffer[depth];
-        int stride = 12 * 4; //3x4 matrix has 12 floats, so 16 * 4 stride length
+        int stride = 16 * 4; //4x4 matrix has 16 floats, so 16 * 4 stride length
 
         for (int i = 0, length = 1; i < parts.Length; i++, length *= 5)
         {
             parts[i] = new NativeArray<FractalPart>(length, Allocator.Persistent);
-            matrices[i] = new NativeArray<float3x4>(length,Allocator.Persistent);
+            matrices[i] = new NativeArray<Matrix4x4>(length,Allocator.Persistent);
             matricesBuffers[i] = new ComputeBuffer(length, stride);
         }//each level of the parts array has a FractalPart[] which has 5 times the points as the last level
 
@@ -143,16 +140,15 @@ public class Fractal : MonoBehaviour
 
     private void Update()
     {
-        float spinAngleDelta = 0.125f * PI * Time.deltaTime;
+        float spinAngleDelta = 22.5f * Time.deltaTime;
 
         FractalPart rootPart = parts[0][0];
         rootPart.spinAngle += spinAngleDelta; //changing local struct variable value will not change the array element
-        rootPart.worldRotation = mul(transform.rotation, mul(rootPart.rotation, quaternion.RotateY(rootPart.spinAngle)));
+        rootPart.worldRotation = transform.rotation * rootPart.rotation * Quaternion.Euler(0, rootPart.spinAngle, 0);
         rootPart.worldPosition = transform.position;
         float objectScale = transform.lossyScale.x;
         parts[0][0] = rootPart; //copy back to array to update
-        float3x3 r = float3x3(rootPart.worldRotation) * objectScale;
-		matrices[0][0] = float3x4(r.c0, r.c1, r.c2, rootPart.worldPosition);
+        matrices[0][0] = Matrix4x4.TRS(rootPart.worldPosition, rootPart.worldRotation, objectScale * Vector3.one);
         float scale = objectScale;
         JobHandle jobHandle = default; //represents a handle to the job https://docs.unity3d.com/ScriptReference/Unity.Jobs.JobHandle.html
         for (int li = 1; li < parts.Length; li++) //traverse every level of the parts array (skipping 0, as the root obj never moves)
@@ -165,7 +161,7 @@ public class Fractal : MonoBehaviour
                 parents = parts[li - 1],
                 parts = parts[li],
                 matrices = matrices[li]
-            }.ScheduleParallel(parts[li].Length, 5, jobHandle); //schedule and add to jobHandle dependencies
+            }.ScheduleParallel(parts[li].Length, 1, jobHandle); //schedule and add to jobHandle dependencies
         }
         jobHandle.Complete(); //ensure all jobs are executed fully before proceeding.
 
