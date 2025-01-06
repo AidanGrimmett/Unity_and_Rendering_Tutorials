@@ -1,4 +1,7 @@
 using UnityEngine;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
 
 public class Fractal : MonoBehaviour
 {
@@ -107,10 +110,12 @@ public class Fractal : MonoBehaviour
 
         FractalPart rootPart = parts[0][0];
         rootPart.spinAngle += spinAngleDelta; //changing local struct variable value will not change the array element
-        rootPart.worldRotation = rootPart.rotation * Quaternion.Euler(0f, rootPart.spinAngle, 0f);
+        rootPart.worldRotation = transform.rotation * (rootPart.rotation * Quaternion.Euler(0f, rootPart.spinAngle, 0f));
+        rootPart.worldPosition = transform.position;
+        float objectScale = transform.lossyScale.x;
         parts[0][0] = rootPart; //copy back to array to update
-        matrices[0][0] = Matrix4x4.TRS(rootPart.worldPosition, rootPart.worldRotation, Vector3.one);
-        float scale = 1f;
+        matrices[0][0] = Matrix4x4.TRS(rootPart.worldPosition, rootPart.worldRotation, objectScale * Vector3.one);
+        float scale = objectScale;
         for (int li = 1; li < parts.Length; li++) //traverse every level of the parts array (skipping 0, as the root obj never moves)
         {
             scale *= 0.5f;
@@ -133,7 +138,7 @@ public class Fractal : MonoBehaviour
             }
         }
 
-        var bounds = new Bounds(Vector3.zero, 3f * Vector3.one); //This is used by unity's culling system to decide whether the fractal needs to be drawn
+        var bounds = new Bounds(rootPart.worldPosition, 3f * objectScale * Vector3.one); //This is used by unity's culling system to decide whether the fractal needs to be drawn
                                                                  //fractal will approach a limit less than 3 with infinite size, so this is a safe bounds
         for (int i = 0; i < matricesBuffers.Length; i++)
         {
