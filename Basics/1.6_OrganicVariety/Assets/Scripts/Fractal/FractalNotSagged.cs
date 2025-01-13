@@ -7,22 +7,22 @@ using static Unity.Mathematics.math;
 using quaternion = Unity.Mathematics.quaternion;
 using Random = UnityEngine.Random;
 
-public class Fractal : MonoBehaviour
+public class FractalNotSagged : MonoBehaviour
 {
     //Defining a job requires a struct type which implements a job interface
     //the IJobFor interface requires an Execute(int) function with no return
     //this will replace the innermost loop of the update method
     //meaning, all variables we need in that execution need to be added as fields to the struct
     [BurstCompile(CompileSynchronously = true)] //tell unity to compile with burst
-    struct UpdateFractalLevelJob : IJobFor 
+    struct UpdateFractalLevelJob : IJobFor
     {
+        public float spinAngleDelta;
         public float scale;
-        public float deltaTime;
-        
+
         [ReadOnly] // helpful as it indicates that this will be constant during the job execution, alleviating race condition problems. Can safely be read in parallel.
         public NativeArray<FractalPart> parents;
         public NativeArray<FractalPart> parts;
-        
+
         [WriteOnly]
         public NativeArray<float3x4> matrices;
 
@@ -30,28 +30,12 @@ public class Fractal : MonoBehaviour
         {
             FractalPart parent = parents[i / 5];
             FractalPart part = parts[i];
-            part.spinAngle += part.spinVelocity * deltaTime;
-
-            float3 upAxis = mul(mul(parent.worldRotation, part.rotation), up());
-            float3 sagAxis = cross(up(), upAxis);
-            sagAxis = normalize(sagAxis);
-            float sagMagnitude = length(sagAxis);
-            quaternion baseRotation;
-            if (sagMagnitude > 0f)
-            {
-                sagAxis /= sagMagnitude;
-                quaternion sagRotation = quaternion.AxisAngle(sagAxis, part.maxSagAngle * sagMagnitude);
-                baseRotation = mul(sagRotation, parent.worldRotation);
-            }
-            else
-            {
-                baseRotation = parent.worldRotation;
-            }
+            part.spinAngle += spinAngleDelta;
 
 
-            part.worldRotation = mul(baseRotation, mul(part.rotation, quaternion.RotateY(part.spinAngle))); //quaternion multiplication performs the second rotation, followed by the first rotation so order matters
+            part.worldRotation = mul(parent.worldRotation, mul(part.rotation, quaternion.RotateY(part.spinAngle))); //quaternion multiplication performs the second rotation, followed by the first rotation so order matters
             part.worldPosition = parent.worldPosition +
-                mul(part.worldRotation, float3(0f, 1.5f * scale, 0f)); //set position using scale and direction, applying parents rotation too.
+                mul(parent.worldRotation, 1.5f * scale * part.direction); //set position using scale and direction, applying parents rotation too.
             parts[i] = part;
 
             float3x3 r = float3x3(part.worldRotation) * scale; //to save data transfer to GPU we manually assemble a 3x4 matrix
@@ -59,7 +43,7 @@ public class Fractal : MonoBehaviour
         }
     }
 
-    static readonly int 
+    static readonly int
         matricesId = Shader.PropertyToID("_Matrices"),
         colourAId = Shader.PropertyToID("_ColourA"),
         colourBId = Shader.PropertyToID("_ColourB"),
@@ -69,53 +53,39 @@ public class Fractal : MonoBehaviour
 
     struct FractalPart
     {
-        public float3 worldPosition;
+        public float3 direction, worldPosition;
         public quaternion rotation, worldRotation;
         public float spinAngle; //used to maintain fresh quaternions for transformation matrices,
                                 //floating point errors plague us otherwise.
-        public float maxSagAngle, spinVelocity;
     }
-    [Header("Fractal Structure")]
+
     [SerializeField, Range(3, 10)]
     int depth = 5;
 
     [SerializeField]
     Mesh mesh, leafMesh;
 
-    [SerializeField, Range(0f, 90f)]
-    float maxSagAngleA = 15f, maxSagAngleB = 25f;
-
-    [Header("Fractal Colours")]
-
     [SerializeField]
     Material material;
 
     [SerializeField]
     Gradient gradientA, gradientB;
-    
+
     [SerializeField]
     Color leafColourA, leafColourB;
-
-    [Header("Fractal Spin")]
-
-    [SerializeField, Range(0f, 90f)]
-    float spinSpeedA = 20f;
-    [SerializeField, Range(0f, 90f)]
-    float spinSpeedB = 25f;
-
-    [SerializeField, Range(0f, 1f)]
-    float reverseSpinChance = 0.25f;
 
     NativeArray<FractalPart>[] parts;
 
     NativeArray<float3x4>[] matrices; //usually, the transform component contains the necessary transformation matrices
-                            //as we are now using procedural drawing instead of GOs, we need to store these manually.
+                                      //as we are now using procedural drawing instead of GOs, we need to store these manually.
 
-    static quaternion[] rotations = 
-    { 
-        quaternion.identity, 
+    static float3[] directions = { up(), right(), left(), forward(), back() };
+
+    static quaternion[] rotations =
+    {
+        quaternion.identity,
         quaternion.RotateZ(-0.5f * PI), quaternion.RotateZ(0.5f * PI),
-        quaternion.RotateX(0.5f * PI), quaternion.RotateX(-0.5f * PI) 
+        quaternion.RotateX(0.5f * PI), quaternion.RotateX(-0.5f * PI)
     };
 
     ComputeBuffer[] matricesBuffers;
@@ -123,9 +93,8 @@ public class Fractal : MonoBehaviour
 
     FractalPart CreatePart(int childIndex) => new FractalPart
     {
-        maxSagAngle = radians(Random.Range(maxSagAngleA, maxSagAngleB)),
-        rotation = rotations[childIndex],
-        spinVelocity = (Random.value < reverseSpinChance ? -1f : 1f) * radians(Random.Range(spinSpeedA, spinSpeedB))
+        direction = directions[childIndex],
+        rotation = rotations[childIndex]
     };
 
     private void OnEnable()
@@ -142,7 +111,7 @@ public class Fractal : MonoBehaviour
         for (int i = 0, length = 1; i < parts.Length; i++, length *= 5)
         {
             parts[i] = new NativeArray<FractalPart>(length, Allocator.Persistent);
-            matrices[i] = new NativeArray<float3x4>(length,Allocator.Persistent);
+            matrices[i] = new NativeArray<float3x4>(length, Allocator.Persistent);
             matricesBuffers[i] = new ComputeBuffer(length, stride);
             sequenceNumbers[i] = new Vector4(Random.value, Random.value, Random.value, Random.value);
         }//each level of the parts array has a FractalPart[] which has 5 times the points as the last level
@@ -183,7 +152,7 @@ public class Fractal : MonoBehaviour
 
     private void OnValidate()
     {
-        if (parts !=null && enabled)
+        if (parts != null && enabled)
         {
             OnDisable();
             OnEnable();
@@ -192,15 +161,16 @@ public class Fractal : MonoBehaviour
 
     private void Update()
     {
-        float deltaTime = Time.deltaTime;
+        float spinAngleDelta = 0.125f * PI * Time.deltaTime;
+
         FractalPart rootPart = parts[0][0];
-        rootPart.spinAngle += rootPart.spinVelocity * deltaTime; //changing local struct variable value will not change the array element
+        rootPart.spinAngle += spinAngleDelta; //changing local struct variable value will not change the array element
         rootPart.worldRotation = mul(transform.rotation, mul(rootPart.rotation, quaternion.RotateY(rootPart.spinAngle)));
         rootPart.worldPosition = transform.position;
         float objectScale = transform.lossyScale.x;
         parts[0][0] = rootPart; //copy back to array to update
         float3x3 r = float3x3(rootPart.worldRotation) * objectScale;
-		matrices[0][0] = float3x4(r.c0, r.c1, r.c2, rootPart.worldPosition);
+        matrices[0][0] = float3x4(r.c0, r.c1, r.c2, rootPart.worldPosition);
         float scale = objectScale;
         JobHandle jobHandle = default; //represents a handle to the job https://docs.unity3d.com/ScriptReference/Unity.Jobs.JobHandle.html
         for (int li = 1; li < parts.Length; li++) //traverse every level of the parts array (skipping 0, as the root obj never moves)
@@ -208,7 +178,7 @@ public class Fractal : MonoBehaviour
             scale *= 0.5f;
             jobHandle = new UpdateFractalLevelJob // create the job and set all fields
             {
-                deltaTime = deltaTime,
+                spinAngleDelta = spinAngleDelta,
                 scale = scale,
                 parents = parts[li - 1],
                 parts = parts[li],
