@@ -75,6 +75,7 @@ public class Fractal : MonoBehaviour
                                 //floating point errors plague us otherwise.
         public float maxSagAngle, spinVelocity;
     }
+    //inspector options
     [Header("Fractal Structure")]
     [SerializeField, Range(3, 10)]
     int depth = 5;
